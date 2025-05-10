@@ -29,4 +29,5 @@ def match_skill_route():
     return jsonify({'matches': matches})
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=10000)
+
