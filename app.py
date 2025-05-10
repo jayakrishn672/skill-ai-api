@@ -1,42 +1,32 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from model import detect_skill, match_skills
 from supabase_client import supabase
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Enable CORS for all origins
 
-@app.route("/")
-def home():
-    return "Welcome to DreamSwap AI API!"
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"status": "ok"}), 200
 
 @app.route('/detect-skill', methods=['POST'])
-def detect_skill_endpoint():
-    try:
-        data = request.json
-        video_url = data.get('video_url')
-        if not video_url:
-            return jsonify({"error": "Missing video_url"}), 400
-
-        detected_skill = detect_skill(video_url)
-        return jsonify({"detected_skill": detected_skill})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def detect_skill_route():
+    data = request.get_json()
+    text = data.get('text')
+    if not text:
+        return jsonify({'error': 'Missing text field'}), 400
+    skills = detect_skill(text)
+    return jsonify({'skills': skills})
 
 @app.route('/match-skill', methods=['POST'])
-def match_skill_endpoint():
-    try:
-        data = request.json
-        offered_skill = data.get('offered_skill')
-        wanted_skill = data.get('wanted_skill')
-
-        if not offered_skill or not wanted_skill:
-            return jsonify({"error": "Missing offered or wanted skill"}), 400
-
-        matches = match_skills(offered_skill, wanted_skill)
-        return jsonify({"top_matches": matches})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+def match_skill_route():
+    data = request.get_json()
+    skills = data.get('skills')
+    if not skills:
+        return jsonify({'error': 'Missing skills'}), 400
+    matches = match_skills(skills)
+    return jsonify({'matches': matches})
 
 if __name__ == '__main__':
-    import os
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run()
